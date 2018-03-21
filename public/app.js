@@ -1,11 +1,11 @@
 //Grab the articles as a json
-// $.getJSON("/boms", function(data) {
-//   // For each one
-//   for (var i = 0; i < data.length; i++) {
-//     // Display the apropos information on the page
-//     $("#boms").append("<p data-id='" + data[i]._id + "'>" + data[i].title + "<br />" + data[i].link + "</p>");
-//   }
-// });
+$.getJSON("/boms", function(data) {
+  // For each one
+  for (var i = 0; i < data.length; i++) {
+    // Display the apropos information on the page
+    $("#boms").append("<p data-id='" + data[i]._id + "'>" + data[i].name + "</p>");
+  }
+});
 
 
 // Whenever someone clicks a p tag
@@ -54,6 +54,10 @@ $(document).on("click", "#submit", function() {
     data: {
       // Value taken from title input
       name: thisId,
+      designer: $("#designerName").val().trim(),
+      url: $("#kitUrlLink").val().trim(),
+      pcb: $("#pcbUrlLink").val().trim(),
+      faceplate: $("#faceplateUrlLink").val().trim(),
       // Value taken from note textarea
     //  body: $("#bodyinput").val()
     }

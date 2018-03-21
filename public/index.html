@@ -38,17 +38,23 @@
   </head>
   <body>
     <div id="wrapper">
+    <form>
       <h1>DIY KITS add bom</h1>
       <h2><i>Add a bom</i></h2>
       <div id="addbom"></div>
-      <form>
-        New BOM:<br>
-        <input type="text" name="newbom" id="bomTitle"><br>
-        <input type="submit" value="Submit" id="submit">
-      </form>
-      <div id="boms">
+      <New BOM:<br>
+      <input type="text" name="newbom" id="bomTitle"><br>
+      Designer<input type="text" name="designer" id="designerName"><br>
+      Kit URL<input type="text" name="kitUrl" id="kitUrlLink"><br>
+      PCB URL<input type="text" name="pcbUrl" id="pcbUrlLink"><br>
+      Faceplate URL<input type="text" name="faceplateUrl" id="faceplateUrlLink"><br>
+      <label for="file">Choose file to upload</label>
+      <input type="file" id="file" name="file" multiple><br>
+      <input type="submit" value="Submit" id="submit">
+    </form>
+    <div id="boms">
 
-      </div>
+    </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="app.js"></script>

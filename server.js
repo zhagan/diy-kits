@@ -1,3 +1,4 @@
+
 var express = require("express");
 var bodyParser = require("body-parser");
 var logger = require("morgan");
@@ -5,6 +6,10 @@ var mongoose = require("mongoose");
 //var $ = require('jquery');
 var getJSON = require('get-json');
 var unirest = require('unirest');
+//var bb = require('express-busboy');
+const busboyBodyParser = require('busboy-body-parser');
+
+
 
 
 
@@ -24,11 +29,15 @@ var PORT = 3000;
 var app = express();
 
 // Configure middleware
-
+// bb.extend(app, {
+//     upload: true,
+//     path: './uploads',
+//     allowedPath: /./
+// });
 // Use morgan logger for logging requests
 app.use(logger("dev"));
 // Use body-parser for handling form submissions
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(busboyBodyParser({ limit: '5mb' }));
 // Use express.static to serve the public folder as a static directory
 app.use(express.static("public"));
 
@@ -152,10 +161,31 @@ app.get("/bom/:id", function(req, res) {
   //   });
 });
 app.post("/newbom/:id", function(req, res) {
+  //console.log(req.params.file);
+
+  console.log("files!!!! "+ req.files.file);
   db.Bom.create(req.body)
         .then(function(dbBom) {
+          //dbBom.octopartBom.plugin(req.file);
+        //x  bd.Bom.plugin();
           // View the added result in the console
+          // db.Bom.findAndModify(
+          //       {name: req.body.name}, // query
+          //       //[['_id','asc']],  // sort order
+          //       {$set: {octopartBom: req.file}}, // replacement, replaces only the field "hi"
+          //       //{}, // options
+          //       function(err, object) {
+          //           if (err){
+          //               console.warn(err.message);  // returns error if no matching object found
+          //           }else{
+          //               console.dir(object);
+          //           }
+          //       });
+          console.log("pingning")
+
+          //return db.Bom.findOneAndUpdate({ _id: req.params.id }, { octopartBom: req.files.file }, { new: true });
           console.log(dbBom);
+          //console.log(dbBom);
         })
         .catch(function(err) {
           // If an error occurred, send it to the client
