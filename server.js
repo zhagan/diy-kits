@@ -1,15 +1,18 @@
 
 var express = require("express");
-var bodyParser = require("body-parser");
+
 var logger = require("morgan");
 var mongoose = require("mongoose");
 //var $ = require('jquery');
 var getJSON = require('get-json');
 var unirest = require('unirest');
 //var bb = require('express-busboy');
-const busboyBodyParser = require('busboy-body-parser');
+// const busboy = require('busboy-body-parser');
 
+var bodyParser = require("body-parser");
+const csv=require('csvtojson');
 
+//var cors  = require('cors');
 
 
 
@@ -27,8 +30,9 @@ var PORT = 3000;
 
 // Initialize Express
 var app = express();
-
-// Configure middleware
+const fileUpload = require('express-fileupload');
+app.use(fileUpload());
+//Configure middleware
 // bb.extend(app, {
 //     upload: true,
 //     path: './uploads',
@@ -37,7 +41,14 @@ var app = express();
 // Use morgan logger for logging requests
 app.use(logger("dev"));
 // Use body-parser for handling form submissions
-app.use(busboyBodyParser({ limit: '5mb' }));
+//app.use(cors());
+app.use(bodyParser());
+//app.use(bodyParser.urlencoded({ extended: false }));
+// var multer  = require('multer');
+// var upload = multer({ dest: 'uploads/' });
+
+
+
 // Use express.static to serve the public folder as a static directory
 app.use(express.static("public"));
 
@@ -49,7 +60,53 @@ mongoose.connect("mongodb://localhost/diykits", {
 });
 
 // Routes
+app.post("/newbom/:id", function(req, res) {
+  //console.log(req.params.file);
+  // if (!req.files)
+  //   return res.status(400).send('No files were uploaded.');
+  //console.log("files!!!! "+ req.files.file);
+  var insert = {
+    newbom: req.body.newbom,
+    designer: req.body.designer,
+    url: req.body.url,
+    pcb: req.body.pcb,
+    faceplate: req.body.faceplate,
+    fileUpload: req.files.fileUpload,
+  }
+  db.Bom.create(insert)
+        .then(function(dbBom) {
+          console.log("pingning")
 
+          // return db.Bom.findOneAndUpdate({ _id: req.params.id }, { octopartBom: req.files.fileUpload}, { new: true });
+          console.log(dbBom);
+          //console.log(dbBom);
+        })
+        .catch(function(err) {
+          // If an error occurred, send it to the client
+          console.log(err);
+        });
+
+});
+
+app.post("/newbomTest", function(req, res) {
+  //console.log(req.params.file);
+  // if (!req.files)
+  //   return res.status(400).send('No files were uploaded.');
+  //console.log("files!!!! "+ req.files.file);
+  db.Bom.create(req.body)
+        .then(function(dbBom) {
+          console.log("pingning")
+
+          //return db.Bom.findOneAndUpdate({ _id: req.params.id }, { octopartBom: req.files.fileUpload }, { new: true });
+          console.log(dbBom);
+          //console.log(dbBom);
+        })
+        .catch(function(err) {
+          // If an error occurred, send it to the client
+          return res.json(err);
+        });
+
+});
 // A GET route for scraping the echojs website
 app.get("/boms", function(req, res) {
   db.Bom.find({})
@@ -111,21 +168,68 @@ app.get("/inventory", function(req, res) {
 });
 
 app.get("/octopart", function(req, res) {
+    var url1 = 'http://octopart.com/api/v3/parts/match?';
+    url1 += '&queries=[{"mpn":"SN74S74N"}]';
+    url1 += '&apikey=d7585fa3';
+    url1 += '&callback=?';
+    //
+    // unirest.get(url)
+    //   .send()
+    //   .end(response=> {
+    //     if (response.ok) {
+    //       console.log("Got a response: ", response.body)
+    //     } else {
+    //       console.log("Got an error: ", response.error)
+    //     }
+    //     var partRes = [];
+    //     csv({noheader:false}).fromString(response.body)
+    //        .on('csv',(csv)=>{
+    //             partRes.push(csv);
+    //          })
+    //          .on('done',()=>{
+    //              console.log(partRes);
+    //              res.send(partRes);
+    //          })
+    //     // res.send();
+
+    var queries = [
+        {'mpn': '1N4007*', 'reference': 'line1'},
+        // {'sku': '67K1122', 'reference': 'line2'},
+        // {'mpn_or_sku': 'SN74S74N', 'reference': 'line3'},
+        // {'mpn': 'SN74S74N', 'brand': 'Texas Instruments', 'reference': 'line4'}
+    ];
+
+    var args = {
+        queries: JSON.stringify(queries)
+    };
+
     var url = 'http://octopart.com/api/v3/parts/match?';
-    url += '&queries=[{"mpn":"1N4007"}]';
+    url += '&queries='+JSON.stringify(queries);
     url += '&apikey=d7585fa3';
     url += '&callback=?';
+    url += '&include[]=specs';
 
     unirest.get(url)
       .send()
       .end(response=> {
         if (response.ok) {
           console.log("Got a response: ", response.body)
+          var b = response.body.slice(2, response.body.length-1);
+          var resObj = JSON.parse(b);
+          console.log(resObj);
+          res.send(resObj);
         } else {
           console.log("Got an error: ", response.error)
         }
-        res.send(response.body).pretty;
-      });
+        // var partRes = [];
+        // csv({noheader:false}).fromString(response.body)
+        //    .on('json',(csv)=>{
+        //         partRes.push(csv);
+        //      })
+        //      .on('done',()=>{
+        //          console.log(partRes);
+        //          res.send(partRes);
+        //      })
 
     // $.getJSON(url, args, function(response){
     //     var queries = response['request']['queries'];
@@ -136,63 +240,30 @@ app.get("/octopart", function(req, res) {
     //         // print corresponding result
     //         console.log(response['results'][i]);
     //     });
-    //   res.json(response);
-    // });
-    // res.send(getJSON('http://api.listenparadise.org', function(error, response){
-    //
-    // //res.json(response);
-    // console.log("ping");
-    // }));
+
+
+    });
 
 });
 // Route for grabbing a specific Article by id, populate it with it's note
 app.get("/bom/:id", function(req, res) {
   // // Using the id passed in the id parameter, prepare a query that finds the matching one in our db...
-  // db.Article.findOne({ _id: req.params.id })
-  //   // ..and populate all of the notes associated with it
-  //   .populate("note")
-  //   .then(function(dbArticle) {
-  //     // If we were able to successfully find an Article with the given id, send it back to the client
-  //     res.json(dbArticle);
-  //   })
-  //   .catch(function(err) {
-  //     // If an error occurred, send it to the client
-  //     res.json(err);
-  //   });
-});
-app.post("/newbom/:id", function(req, res) {
-  //console.log(req.params.file);
-
-  console.log("files!!!! "+ req.files.file);
-  db.Bom.create(req.body)
-        .then(function(dbBom) {
-          //dbBom.octopartBom.plugin(req.file);
-        //x  bd.Bom.plugin();
-          // View the added result in the console
-          // db.Bom.findAndModify(
-          //       {name: req.body.name}, // query
-          //       //[['_id','asc']],  // sort order
-          //       {$set: {octopartBom: req.file}}, // replacement, replaces only the field "hi"
-          //       //{}, // options
-          //       function(err, object) {
-          //           if (err){
-          //               console.warn(err.message);  // returns error if no matching object found
-          //           }else{
-          //               console.dir(object);
-          //           }
-          //       });
-          console.log("pingning")
-
-          //return db.Bom.findOneAndUpdate({ _id: req.params.id }, { octopartBom: req.files.file }, { new: true });
-          console.log(dbBom);
-          //console.log(dbBom);
+  db.Bom.findOne({ _id: req.params.id })
+  .then(function(dbFile){
+   console.log(dbFile.fileUpload.data.buffer.toString());
+   var bomArr = [];
+   csv({noheader:false}).fromString(dbFile.fileUpload.data.buffer.toString())
+      .on('json',(json)=>{
+          bomArr.push(json);
         })
-        .catch(function(err) {
-          // If an error occurred, send it to the client
-          return res.json(err);
-        });
+        .on('done',()=>{
+            console.log(bomArr);
+            res.send(bomArr);
+        })
+      });
 
 });
+
 // Route for saving/updating an Article's associated Note
 app.post("/addpart/:id", function(req, res) {
   // Create a new note and pass the req.body to the entry
